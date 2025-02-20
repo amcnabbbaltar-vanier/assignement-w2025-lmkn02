@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;       // or "using TMPro;" if using TextMeshPro
+using UnityEngine.UI;       
 using UnityEngine.SceneManagement;
 using TMPro;
 
@@ -8,7 +8,7 @@ using TMPro;
 public class LevelTimer : MonoBehaviour
 {
     
-    public TextMeshProUGUI clockText; // If using TextMeshPro, comment out the above line
+    public TextMeshProUGUI clockText; 
 
     private float elapsedTime = 0f;
     private bool isPaused = false;
@@ -30,7 +30,7 @@ public class LevelTimer : MonoBehaviour
 
     private void UpdateClockText()
     {
-        // Format to two decimal places
+      
         clockText.text = "Time: " + elapsedTime.ToString("F2") + "s";
     }
 
