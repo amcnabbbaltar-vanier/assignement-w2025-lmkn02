@@ -13,9 +13,9 @@ public class EndGameDisplay : MonoBehaviour
         int score = GameManager.instance.currentScore;
         float time = GameManager.instance.finalTime;
 
-        finalScoreText.text = "Final Score: " + score;
-     
-        finalTimeText.text = "Time: " + time.ToString("F2") + "s";
+        finalScoreText.text = "Final Score: " + GameManager.instance.currentScore;
+        finalTimeText.text = "Time: " + GameManager.instance.totalTime;
+
     }
 
     public void GoToMainMenu()

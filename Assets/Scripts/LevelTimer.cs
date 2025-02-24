@@ -15,7 +15,7 @@ public class LevelTimer : MonoBehaviour
 
     private void Start()
     {
-        elapsedTime = 0f;
+        
         UpdateClockText();
     }
 
@@ -37,7 +37,7 @@ public class LevelTimer : MonoBehaviour
     private void UpdateClockText()
     {
       
-        clockText.text = "Time: " + elapsedTime.ToString("F2") + "s";
+        clockText.text = "Time: " + GameManager.instance.totalTime.ToString("F2") + "s";
     }
 
     public void ResetTimer()
