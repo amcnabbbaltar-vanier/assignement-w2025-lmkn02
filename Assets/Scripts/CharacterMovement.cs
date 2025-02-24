@@ -1,5 +1,6 @@
 using UnityEngine;
 using Cinemachine;
+using System.Collections; // Needed for IEnumerator & Coroutines
 
 [RequireComponent(typeof(Rigidbody))] // Ensures that a Rigidbody component is attached to the GameObject
 public class CharacterMovement : MonoBehaviour
@@ -27,10 +28,10 @@ public class CharacterMovement : MonoBehaviour
     private Transform cameraTransform; // Reference to the camera's transform
 
     // Input variables
-    private float moveX; // Stores horizontal movement input (A/D or Left/Right Arrow)
-    private float moveZ; // Stores vertical movement input (W/S or Up/Down Arrow)
-    private bool jumpRequest; // Flag to check if the player requested a jump
-    private Vector3 moveDirection; // Stores the calculated movement direction
+    private float moveX;  // Horizontal input
+    private float moveZ;  // Vertical input
+    private bool jumpRequest;
+    private Vector3 moveDirection; // Movement direction
 
     // ============================== Animation Variables ==============================
     [Header("Anim values")]
@@ -50,44 +51,29 @@ public class CharacterMovement : MonoBehaviour
     private bool IsRunning => Input.GetButton("Run");
 
     // ============================== Unity Built-in Methods ==============================
-
-    /// <summary>
-    /// Called when the script is first initialized.
-    /// </summary>
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
-        InitializeComponents(); // Initialize Rigidbody and Camera reference
+        InitializeComponents();
     }
 
-    /// <summary>
-    /// Called every frame, used to register player input.
-    /// </summary>
     private void Update()
     {
-        RegisterInput(); // Collect player input
+        RegisterInput();
     }
 
-    /// <summary>
-    /// Called every physics update (FixedUpdate ensures physics stability).
-    /// </summary>
     private void FixedUpdate()
     {
-        HandleMovement(); // Process movement and physics-based updates
+        HandleMovement();
     }
 
     // ============================== Initialization ==============================
-
-    /// <summary>
-    /// Initializes Rigidbody and camera reference.
-    /// Also locks and hides the cursor for better control.
-    /// </summary>
     private void InitializeComponents()
     {
-        rb = GetComponent<Rigidbody>(); // Get the Rigidbody component
-        rb.freezeRotation = true; // Prevent Rigidbody from rotating due to physics interactions
-        rb.interpolation = RigidbodyInterpolation.Interpolate; // Smooth physics interpolation
+        rb = GetComponent<Rigidbody>();
+        rb.freezeRotation = true;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         // Assign the main camera if available
         if (Camera.main)
@@ -99,16 +85,11 @@ public class CharacterMovement : MonoBehaviour
     }
 
     // ============================== Input Handling ==============================
-
-    /// <summary>
-    /// Reads player input values and registers movement/jump requests.
-    /// </summary>
     private void RegisterInput()
     {
-        moveX = Input.GetAxis("Horizontal"); // Get horizontal movement input
-        moveZ = Input.GetAxis("Vertical");   // Get vertical movement input
+        moveX = Input.GetAxis("Horizontal");
+        moveZ = Input.GetAxis("Vertical");
 
-        // Register a jump request if the player presses the Jump button
         if (Input.GetButtonDown("Jump"))
         {
             jumpRequest = true;
@@ -116,61 +97,47 @@ public class CharacterMovement : MonoBehaviour
     }
 
     // ============================== Movement Handling ==============================
-
-    /// <summary>
-    /// Handles movement-related logic: calculating direction, jumping, rotating, and moving.
-    /// </summary>
     private void HandleMovement()
     {
-        CalculateMoveDirection(); // Compute the movement direction based on input
-        HandleJump(); // Process jump input
-        RotateCharacter(); // Rotate the character towards the movement direction
-        MoveCharacter(); // Move the character using velocity-based movement
+        CalculateMoveDirection();
+        HandleJump();
+        RotateCharacter();
+        MoveCharacter();
     }
 
-    /// <summary>
-    /// Calculates the movement direction based on player input and camera orientation.
-    /// </summary>
     private void CalculateMoveDirection()
     {
-        // If the camera is not assigned, move based on world space
         if (!cameraTransform)
         {
+            // No camera? Use world space
             moveDirection = new Vector3(moveX, 0, moveZ).normalized;
         }
         else
         {
-            // Get forward and right vectors from the camera perspective
+            // Camera-based forward/right
             Vector3 forward = cameraTransform.forward;
             Vector3 right = cameraTransform.right;
 
-            // Ignore Y-axis movement to prevent unwanted tilting
             forward.y = 0f;
             right.y = 0f;
-
-            // Normalize vectors to maintain consistent movement speed
             forward.Normalize();
             right.Normalize();
 
-            // Calculate movement direction relative to the camera orientation
             moveDirection = (forward * moveZ + right * moveX).normalized;
         }
     }
 
-    /// <summary>
-    /// Handles jumping by applying an impulse force if the character is grounded.
-    /// </summary>
     private void HandleJump()
     {
         if (jumpRequest)
         {
-            // Normal first jump if grounded
+            
             if (IsGrounded)
             {
                 rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
                 hasUsedDoubleJump = false;
             }
-            // If not grounded, we have the power-up, and haven't used double jump yet
+          
             else if (!IsGrounded && canDoubleJump && !hasUsedDoubleJump)
             {
                 rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -182,7 +149,7 @@ public class CharacterMovement : MonoBehaviour
         }
     }
 
-    // This method plays the flip animation when the second jump occurs.
+    
     private void DoFlipAnimation()
     {
         if (animator != null)
@@ -191,12 +158,8 @@ public class CharacterMovement : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Rotates the character towards the movement direction.
-    /// </summary>
     public void RotateCharacter()
     {
-        // Rotate only if the character is moving
         if (moveDirection.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
@@ -204,26 +167,39 @@ public class CharacterMovement : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Moves the character using Rigidbody's velocity instead of MovePosition.
-    /// This ensures smooth movement while avoiding physics conflicts.
-    /// </summary>
     public void MoveCharacter()
     {
-        // Determine movement speed (walking or running)
         float speed = IsRunning ? baseRunSpeed : baseWalkSpeed;
-
-        // Set ground speed value for animation purposes
         groundSpeed = (moveDirection != Vector3.zero) ? speed : 0.0f;
 
-        // Preserve the current Y velocity to maintain gravity effects
         Vector3 newVelocity = new Vector3(
             moveDirection.x * speed * speedMultiplier,
-            rb.linearVelocity.y, // Keep the existing Y velocity for jumping & gravity
+            rb.linearVelocity.y,
             moveDirection.z * speed * speedMultiplier
         );
 
-        // Apply the new velocity directly
         rb.linearVelocity = newVelocity;
+    }
+
+    // ============================== SPEED BOOST LOGIC ==============================
+   
+    public void StartSpeedBoost(float multiplierValue, float duration)
+    {
+       
+        StopAllCoroutines(); 
+
+        StartCoroutine(SpeedBoostCoroutine(multiplierValue, duration));
+    }
+
+    private IEnumerator SpeedBoostCoroutine(float multiplierValue, float boostSeconds)
+    {
+        float originalMultiplier = speedMultiplier;
+        Debug.Log("BOOST START: from " + originalMultiplier + " to " + multiplierValue);
+
+        speedMultiplier = multiplierValue;
+        yield return new WaitForSeconds(boostSeconds);
+
+        speedMultiplier = originalMultiplier;
+        Debug.Log("BOOST END: Reverted to " + speedMultiplier);
     }
 }
