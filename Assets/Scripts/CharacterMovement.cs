@@ -4,6 +4,10 @@ using Cinemachine;
 [RequireComponent(typeof(Rigidbody))] // Ensures that a Rigidbody component is attached to the GameObject
 public class CharacterMovement : MonoBehaviour
 {
+    private Animator animator;
+    public bool canDoubleJump = false;  // set true by pickup
+    private bool hasUsedDoubleJump = false;  // track if second jump was used
+
     // ============================== Movement Settings ==============================
     [Header("Movement Settings")]
     [SerializeField] private float baseWalkSpeed = 5f;    // Base speed when walking
@@ -37,7 +41,7 @@ public class CharacterMovement : MonoBehaviour
     /// Checks if the character is currently grounded using a Raycast.
     /// If false, the character is in the air.
     /// </summary>
-    public bool IsGrounded => 
+    public bool IsGrounded =>
         Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, groundCheckDistance);
 
     /// <summary>
@@ -52,6 +56,8 @@ public class CharacterMovement : MonoBehaviour
     /// </summary>
     private void Awake()
     {
+        rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
         InitializeComponents(); // Initialize Rigidbody and Camera reference
     }
 
@@ -156,18 +162,39 @@ public class CharacterMovement : MonoBehaviour
     /// </summary>
     private void HandleJump()
     {
-        // Apply jump force only if jump was requested and the character is grounded
-        if (jumpRequest && IsGrounded)
+        if (jumpRequest)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // Apply force upwards
-            jumpRequest = false; // Reset jump request after applying jump
+            // Normal first jump if grounded
+            if (IsGrounded)
+            {
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                hasUsedDoubleJump = false;
+            }
+            // If not grounded, we have the power-up, and haven't used double jump yet
+            else if (!IsGrounded && canDoubleJump && !hasUsedDoubleJump)
+            {
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                hasUsedDoubleJump = true;
+                DoFlipAnimation();
+            }
+
+            jumpRequest = false;
+        }
+    }
+
+    // This method plays the flip animation when the second jump occurs.
+    private void DoFlipAnimation()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("FlipTrigger");
         }
     }
 
     /// <summary>
     /// Rotates the character towards the movement direction.
     /// </summary>
-    private void RotateCharacter()
+    public void RotateCharacter()
     {
         // Rotate only if the character is moving
         if (moveDirection.sqrMagnitude > 0.01f)
@@ -181,17 +208,17 @@ public class CharacterMovement : MonoBehaviour
     /// Moves the character using Rigidbody's velocity instead of MovePosition.
     /// This ensures smooth movement while avoiding physics conflicts.
     /// </summary>
-    private void MoveCharacter()
+    public void MoveCharacter()
     {
         // Determine movement speed (walking or running)
         float speed = IsRunning ? baseRunSpeed : baseWalkSpeed;
-        
+
         // Set ground speed value for animation purposes
         groundSpeed = (moveDirection != Vector3.zero) ? speed : 0.0f;
 
         // Preserve the current Y velocity to maintain gravity effects
         Vector3 newVelocity = new Vector3(
-            moveDirection.x * speed * speedMultiplier, 
+            moveDirection.x * speed * speedMultiplier,
             rb.linearVelocity.y, // Keep the existing Y velocity for jumping & gravity
             moveDirection.z * speed * speedMultiplier
         );
