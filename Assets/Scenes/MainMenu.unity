@@ -672,6 +672,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43d783f8603b20545b4f0ab5b3c45393, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentScore: 0
   clockUI: {fileID: 0}
 --- !u!1 &1379564816
 GameObject:
@@ -948,7 +949,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.06808474, g: 0.26061574, b: 0.8490566, a: 1}
+  m_Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

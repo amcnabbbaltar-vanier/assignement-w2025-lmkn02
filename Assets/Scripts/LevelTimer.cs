@@ -25,6 +25,12 @@ public class LevelTimer : MonoBehaviour
         {
             elapsedTime += Time.deltaTime;
             UpdateClockText();
+
+           
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.finalTime = elapsedTime;
+            }
         }
     }
 
